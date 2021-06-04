@@ -25,3 +25,4 @@ Set-GitHubAuthentication -SessionOnly `
 $authtable=Get-AuthHeader $C 
 
 $hashtable= Invoke-RestMethod -Headers $authtable https://api.github.com/user
+$hashtable
