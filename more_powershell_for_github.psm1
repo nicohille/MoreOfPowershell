@@ -42,20 +42,89 @@ param(
 
 $api="https://api.github.com/user/repository_invitations"
 
-$invitations=Invoke-RestMethod -Method Get -Headers $authtable -Uri $api
 
-write-host $invitations.inviter.login 'invited you to his repository' $invitations.repository.name 
 
-if($Repository -ne $null -and $Repository -eq $invitations.repository.name)
+$invites=Invoke-RestMethod -Method Get -Headers $authtable -Uri $api
+return $invites
+
+$aantal=$invites | Measure
+
+if($Repository -ne $null)
 {
 
-$api2='https://api.github.com/user/repository_invitations/'+ $invitations.id
-Invoke-RestMethod -Method Patch -Headers $authtable -Uri $api2
+    for($i=0;$i -lt $aantal.count;$i++)
+    {
+        if($Repository -eq $invitations[$i].repository.name)
+        {
+            write-host $invites[$i].inviter.login 'invited you to his repository' $invites[$i].repository.name. 'you have succesfully joined this repo'
+            $api2='https://api.github.com/user/repository_invitations/'+ $invites[$i].id
+            Invoke-RestMethod -Method Patch -Headers $authtable -Uri $api2
+        }
+    }
+        
 }
 
+
+
+
 }
 
+if($OwnerGroup -ne $null)
+{
 
+    for($i=0;$i -lt $aantal.count;$i++)
+    {
+        $inviteUserO[$i]=$invites[$i] | select -Property invitee
+        $inviteduser[$i]=($inviteUserO[$i].invitee).login
+        
+
+        $inviteO[$i]=$invites[$i] | select -Property inviter
+        $inviter[$i]=($inviteO[$i].inviter).login
+
+
+        $bioinviteduser[$i] = (Get-GitHubUser -UserName $inviter[$i] | Select-Object -Property bio).bio
+
+        $domein="student.ap.be"
+
+        $bioinviter[$i] = (Get-GitHubUser -UserName $inviter[$i] | Select-Object -Property bio).bio
+            
+
+        if($bioinviteduser[$i] -eq $bioinviter[$i])
+        {
+                $api2='https://api.github.com/user/repository_invitations/'+ $invites[$i].id
+                Invoke-RestMethod -Method Patch -Headers $authtable -Uri $api2
+        }
+            
+        
+    }
+        
+}
+
+if($MailDomains -ne $null)
+{
+
+    for($i=0;$i -lt $aantal.count;$i++)
+    {
+        $inviteO[$i]=$invites[$i] | select -Property inviter
+        $inviter[$i]=($inviteO[$i].inviter).login
+
+
+        $email[$i] = (Get-GitHubUser -UserName $inviter[$i] | Select-Object -Property email).email
+
+        $domein="student.ap.be"
+
+            
+
+        if($email[$i] -match $domein)
+        {
+                $api2='https://api.github.com/user/repository_invitations/'+ $invites[$i].id
+                Invoke-RestMethod -Method Patch -Headers $authtable -Uri $api2
+        }
+            
+        
+    }
+        
+}
 
 
 
