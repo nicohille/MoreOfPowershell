@@ -30,6 +30,33 @@ Invoke-RestMethod  -Method PUT -Headers $authtable -uri $api
 
 }
 
+function accept-repositories
+{
+
+param(
+        [parameter(mandatory)] $Repository,
+        [parameter(mandatory)] $OwnerGroup,
+        [parameter(mandatory)] $MailDomains,
+        $authtable
+        )
+
+$api="https://api.github.com/user/repository_invitations"
+
+$invitations=Invoke-RestMethod -Method Get -Headers $authtable -Uri $api
+
+write-host $invitations.inviter.login 'invited you to his repository' $invitations.repository.name 
+
+if($Repository -ne $null -and $Repository -eq $invitations.repository.name)
+{
+
+$api2='https://api.github.com/user/repository_invitations/'+ $invitations.id
+Invoke-RestMethod -Method Patch -Headers $authtable -Uri $api2
+}
+
+}
+
+
+
 
 
 $user = "nico.hille@student.ap.be" 
@@ -56,4 +83,7 @@ if($addcoll -eq "Ja")
         Add-GitHubCollaborator  -Repository $R -Collaborator $U $authtable
     }
 
-
+    $R="PS-misc"
+$owner="nicohille"
+$mail="nico.hille@student.ap.be"
+$invitations=accept-repositories -Repository $R -OwnerGroup $owner -MailDomains $mail $authtable  
