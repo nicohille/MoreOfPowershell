@@ -1,7 +1,8 @@
 ﻿function Get-AuthHeader
 {
 
-param($C)
+param(
+ [parameter(mandatory)] $Credential)
 
 $auth=[System.Convert]::ToBase64String([char[]]$C.GetNetworkCredential().Password)
 
@@ -13,20 +14,19 @@ return $headers
 
 function Add-GitHubCollaborator
 {
-$repo=read-host Aan welke repository wil je de collaborator aan toevoegen
-$collaborator=read-host Geef de user die je wil toevoegen
 
-$C = New-Object System.Management.Automation.PSCredential($collaborator , $ss_token)
+param(
+        [parameter(mandatory)] $Repository,
+        [parameter(mandatory)] $Collaborator,
+        $authtable
+        )
 
-Set-GitHubAuthentication -SessionOnly `
--Credential $C
+$owner="nicohille"
 
-$authcollab=Get-AuthHeader -Credential $C
-$permission=@{permission = "pull"} | ConvertTo-Json;
+$api= 'https://api.github.com/repos/'+ $owner + '/' + $Repository + '/collaborators/' + $Collaborator;
 
-$api= "https://api.github.com/repos/$repo/collaborators/$collaborator";
 
-Invoke-RestMethod -Uri $api -Headers $authcollab -ContentType "application/json" -Method Put -Body $permission
+Invoke-RestMethod  -Method PUT -Headers $authtable -uri $api
 
 }
 
@@ -38,12 +38,12 @@ Read-Host -AsSecureString -Prompt ’token’ | ConvertFrom-SecureString |
 Tee-Object .\secret.txt |
 ConvertTo-SecureString |
 Set-Variable ss_token
-$C = New-Object System.Management.Automation.PSCredential('user' , $ss_token)
+$C = New-Object pscredential $user, $ss_token
 
 Set-GitHubAuthentication -SessionOnly `
 -Credential $C
 
-$authtable=Get-AuthHeader $C 
+$authtable=Get-AuthHeader -Credential $C 
 
 $hashtable= Invoke-RestMethod -Headers $authtable https://api.github.com/user
 
@@ -51,7 +51,9 @@ $addcoll= Read-Host Wil je een collaborator toevoegen
 
 if($addcoll -eq "Ja")
     {
-        Add-GitHubCollaborator
+    $R="test-from-pwsh"
+    $U="kaelhille"
+        Add-GitHubCollaborator  -Repository $R -Collaborator $U $authtable
     }
 
 
