@@ -16,17 +16,19 @@ function Add-GitHubCollaborator
 {
 
 param(
-        [parameter(mandatory)] $Repository,
-        [parameter(mandatory)] $Collaborator,
-        $authtable
+        [parameter(ValueFromPipeline=$true)]$RepositoryName,
+        [parameter(ValueFromPipeline=$true)]$Collaborator,
+        [parameter(ValueFromPipeline=$true)]$Auth
         )
 
 $owner="nicohille"
 
-$api= 'https://api.github.com/repos/'+ $owner + '/' + $Repository + '/collaborators/' + $Collaborator;
+
+$api= 'https://api.github.com/repos/'+ $owner + '/' + $RepositoryName + '/collaborators/' + $Collaborator;
 
 
-Invoke-RestMethod  -Method PUT -Headers $authtable -uri $api
+
+Invoke-RestMethod  -Method PUT -uri $api -Header $Auth
 
 }
 
@@ -45,7 +47,6 @@ $api="https://api.github.com/user/repository_invitations"
 
 
 $invites=Invoke-RestMethod -Method Get -Headers $authtable -Uri $api
-return $invites
 
 $aantal=$invites | Measure
 
@@ -54,7 +55,7 @@ if($Repository -ne $null)
 
     for($i=0;$i -lt $aantal.count;$i++)
     {
-        if($Repository -eq $invitations[$i].repository.name)
+        if($Repository -eq $invites[$i].repository.name)
         {
             write-host $invites[$i].inviter.login 'invited you to his repository' $invites[$i].repository.name. 'you have succesfully joined this repo'
             $api2='https://api.github.com/user/repository_invitations/'+ $invites[$i].id
@@ -115,7 +116,7 @@ if($MailDomains -ne $null)
 
             
 
-        if($email[$i] -match $domein)
+        if(($email[$i] -match $domein) -eq "True")
         {
                 $api2='https://api.github.com/user/repository_invitations/'+ $invites[$i].id
                 Invoke-RestMethod -Method Patch -Headers $authtable -Uri $api2
@@ -147,12 +148,12 @@ $addcoll= Read-Host Wil je een collaborator toevoegen
 
 if($addcoll -eq "Ja")
     {
-    $R="test-from-pwsh"
+        
+    $R="MoreCode4Testing"
     $U="kaelhille"
-        Add-GitHubCollaborator  -Repository $R -Collaborator $U $authtable
+       New-GitHubRepository -RepositoryName $R | Add-GitHubCollaborator  -Collaborator $U  -Auth $authtable
     }
 
-    $R="PS-misc"
-$owner="nicohille"
-$mail="nico.hille@student.ap.be"
+    
+$mail="kael.hille@student.ap.be"
 $invitations=accept-repositories -Repository $R -OwnerGroup $owner -MailDomains $mail $authtable  
